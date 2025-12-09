@@ -1,0 +1,43 @@
+# -----------------------------------------------
+# Script Name: PrintWordFiles.ps1
+# Purpose: Automatically go through a folder and print all Word files once
+# -----------------------------------------------
+
+# === Configuration ===
+# Change this path to the folder you want to scan
+$FolderPath = "C:\Users\389132\Downloads\CV kwasa\CV kwasa"
+
+# Include subfolders? Set to $true or $false
+$IncludeSubfolders = $true
+
+# Get all Word files (.doc, .docx) in the folder
+if ($IncludeSubfolders) {
+    $WordFiles = Get-ChildItem -Path $FolderPath -Recurse -Include *.doc, *.docx
+} else {
+    $WordFiles = Get-ChildItem -Path $FolderPath -Include *.doc, *.docx
+}
+
+# Start Word application
+$Word = New-Object -ComObject Word.Application
+$Word.Visible = $false  # Run in background
+
+Write-Host "Starting to print $($WordFiles.Count) Word file(s)...`n"
+
+# Loop through each Word file and print it
+foreach ($File in $WordFiles) {
+    try {
+        Write-Host "Printing: $($File.FullName)"
+        $Document = $Word.Documents.Open($File.FullName, [ref]$false, [ref]$true)
+        $Document.PrintOut()
+        $Document.Close()
+    }
+    catch {
+        Write-Host "Error printing $($File.FullName): $_"
+    }
+}
+
+# Quit Word application
+$Word.Quit()
+[System.Runtime.Interopservices.Marshal]::ReleaseComObject($Word) | Out-Null
+
+Write-Host "`nAll Word files have been sent to the printer successfully!"
