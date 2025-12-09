@@ -1,0 +1,26 @@
+# Base folder path
+$base = "C:\Users\389132\Downloads\EXP-6\EXP-6"
+
+# Get default printer
+$printer = (Get-Printer | Where-Object { $_.Default -eq $true }).Name
+
+# Get all PDF files (sorted numerically if names start with numbers)
+$pdfs = Get-ChildItem -Path $base -Recurse -Filter *.pdf | Sort-Object {
+    if ($_.BaseName -match '^\d+') { [int]$matches[0] } else { $_.BaseName }
+}
+
+foreach ($pdf in $pdfs) {
+    Write-Host "Printing: $($pdf.FullName)"
+    
+    # Start the print process
+    $proc = Start-Process -FilePath $pdf.FullName -Verb PrintTo -ArgumentList $printer -PassThru
+    
+    # Wait a few seconds to let it queue the job
+    Start-Sleep -Seconds 6
+    
+    # Attempt to stop leftover Acrobat processes (optional cleanup)
+    try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
+    Get-Process | Where-Object { $_.Name -match 'Acrobat|AcroCEF' } | ForEach-Object { $_.Kill() }
+}
+
+Write-Host "✅ All PDF files have been sent to the printer successfully!"
