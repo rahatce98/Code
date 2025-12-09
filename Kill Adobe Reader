@@ -1,0 +1,3 @@
+@echo off
+taskkill /IM Acrobat.exe /F
+taskkill /IM AcroCEF.exe /F
