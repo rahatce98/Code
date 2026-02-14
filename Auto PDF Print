@@ -1,0 +1,30 @@
+$base = "E:\ICB-2.10\TEE & SWIP Costing\Future TEE Provosion"
+$printer = (Get-Printer | Where-Object {$_.Default -eq $true}).Name
+
+$folders = Get-ChildItem -Path $base -Directory
+
+foreach ($folder in $folders) {
+
+    Write-Host "Processing Folder: $($folder.FullName)"
+
+    $pdfs = Get-ChildItem -Path $folder.FullName -Filter *.pdf |
+    Sort-Object {
+        if ($_.BaseName -match '^\d+') {
+            [int]$matches[0]
+        } else {
+            $_.BaseName
+        }
+    }
+
+    foreach ($pdf in $pdfs) {
+
+        Write-Host "Printing $($pdf.FullName)"
+
+        $proc = Start-Process -FilePath $pdf.FullName -Verb PrintTo -ArgumentList "`"$printer`"" -PassThru
+        Start-Sleep -Seconds 6
+
+        if ($proc -and !$proc.HasExited) {
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
